@@ -28,6 +28,8 @@ REPORT zformfactor.
 
 DATA: gv_ok_code LIKE sy-ucomm.
 
+CONSTANTS: gc_newline TYPE c VALUE cl_abap_char_utilities=>newline.
+
 DEFINE _raise.
   raise exception type lcx_exception
     exporting
@@ -57,131 +59,328 @@ CLASS lcx_exception IMPLEMENTATION.
 
 ENDCLASS.
 
-CLASS lcl_logic DEFINITION FINAL.
+CLASS lcl_parameter DEFINITION FINAL.
 
   PUBLIC SECTION.
-    CLASS-METHODS: run RAISING lcx_exception.
-
-    CLASS-DATA: gv_input  TYPE string READ-ONLY,
-                gv_output TYPE string READ-ONLY.
+    METHODS:
+      constructor
+        IMPORTING iv_name TYPE string,
+      get_name
+        RETURNING VALUE(rv_name) TYPE string,
+      set_type
+        IMPORTING iv_type TYPE string,
+      render
+        IMPORTING iv_no_type     TYPE abap_bool DEFAULT abap_false
+        RETURNING VALUE(rv_code) TYPE string.
 
   PRIVATE SECTION.
-    CLASS-METHODS:
-      loop
-        RAISING lcx_exception,
-      handle_statement
-        IMPORTING iv_statement        TYPE string
-        RETURNING VALUE(rv_statement) TYPE string
-        RAISING   lcx_exception,
-      parse_statement
-        IMPORTING iv_statement        TYPE string
-        RETURNING VALUE(rv_statement) TYPE string
-        RAISING   lcx_exception,
-      pretty_print,
-      read_report.
-
-    CLASS-DATA: gt_source TYPE TABLE OF abaptxt255.
+    DATA: mv_name TYPE string,
+          mv_type TYPE string.
 
 ENDCLASS.
 
-CLASS lcl_logic IMPLEMENTATION.
+CLASS lcl_parameter IMPLEMENTATION.
 
-  METHOD read_report.
+  METHOD constructor.
 
-    DATA: ls_result TYPE zcl_aoc_parser=>st_result.
-
-
-    CALL FUNCTION 'RPY_PROGRAM_READ'
-      EXPORTING
-        program_name     = p_prog
-        with_lowercase   = abap_true
-      TABLES
-        source_extended  = gt_source
-      EXCEPTIONS
-        cancelled        = 1
-        not_found        = 2
-        permission_error = 3
-        OTHERS           = 4. "#EC CI_SUBRC
-    ASSERT sy-subrc = 0.
-
-    CONCATENATE LINES OF gt_source INTO gv_input
-      SEPARATED BY cl_abap_char_utilities=>newline.
+    mv_name = iv_name.
 
   ENDMETHOD.
 
-  METHOD loop.
-
-    DATA: lv_statement TYPE string,
-          ls_source    LIKE LINE OF gt_source.
-
-
-    LOOP AT gt_source INTO ls_source.
-      CONCATENATE lv_statement ls_source-line cl_abap_char_utilities=>newline
-        INTO lv_statement.
-
-      IF lv_statement = cl_abap_char_utilities=>newline.
-        CONCATENATE gv_output cl_abap_char_utilities=>newline INTO gv_output.
-        CLEAR lv_statement.
-      ELSEIF lv_statement CP '*.+'.
-        lv_statement = handle_statement( lv_statement ).
-        CONCATENATE gv_output lv_statement INTO gv_output.
-        CLEAR lv_statement.
-      ENDIF.
-
-    ENDLOOP.
-
+  METHOD get_name.
+    rv_name = mv_name.
   ENDMETHOD.
 
-  METHOD handle_statement.
+  METHOD set_type.
+    mv_type = iv_type.
+  ENDMETHOD.
 
-    DATA: lv_condensed TYPE string.
-
-
-    rv_statement = iv_statement.
-    lv_condensed = iv_statement.
-    CONDENSE lv_condensed.
-
-    IF lv_condensed CP 'FORM *' OR lv_condensed CP 'PERFORM *'.
-      rv_statement = parse_statement( iv_statement ).
+  METHOD render.
+    IF iv_no_type = abap_true.
+      rv_code = mv_name.
+    ELSE.
+      CONCATENATE mv_name 'TYPE' mv_type INTO rv_code SEPARATED BY space.
     ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_parameter_list DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    METHODS:
+      size
+        RETURNING VALUE(rv_size) TYPE i,
+      add
+        IMPORTING iv_name             TYPE string
+        RETURNING VALUE(ro_parameter) TYPE REF  TO lcl_parameter,
+      render
+        IMPORTING iv_no_type     TYPE abap_bool DEFAULT abap_false
+        RETURNING VALUE(rv_code) TYPE string.
+
+  PRIVATE SECTION.
+    DATA: mt_list TYPE TABLE OF REF TO lcl_parameter.
+
+ENDCLASS.
+
+CLASS lcl_parameter_list IMPLEMENTATION.
+
+  METHOD size.
+    rv_size = lines( mt_list ).
+  ENDMETHOD.
+
+  METHOD add.
+
+    CREATE OBJECT ro_parameter
+      EXPORTING
+        iv_name = iv_name.
+    APPEND ro_parameter TO mt_list.
 
   ENDMETHOD.
 
-  METHOD parse_statement.
+  METHOD render.
 
     DATA: lt_code      TYPE TABLE OF string,
-          lv_statement TYPE string,
-          ls_result    TYPE zcl_aoc_parser=>st_result.
-
-    FIELD-SYMBOLS: <ls_token> LIKE LINE OF ls_result-tokens.
+          lo_parameter TYPE REF TO lcl_parameter.
 
 
-    lv_statement = iv_statement.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>newline IN lv_statement WITH space.
-    APPEND lv_statement TO lt_code.
-    ls_result = zcl_aoc_parser=>run( lt_code ).
-    IF ls_result-match = abap_false.
-      _raise 'Error parsing code'.
-    ENDIF.
-
-    READ TABLE ls_result-tokens ASSIGNING <ls_token> WITH KEY type = 'T'.
-    ASSERT sy-subrc = 0.
-    CASE <ls_token>-rulename.
-      WHEN 'FORM'.
-        BREAK-POINT.
-      WHEN 'PERFORM_INTERN'.
-        BREAK-POINT.
-      WHEN OTHERS.
-        BREAK-POINT.
-    ENDCASE.
-
-    rv_statement = 'parse, todo'.
+    LOOP AT mt_list INTO lo_parameter.
+      APPEND lo_parameter->render( iv_no_type ) TO lt_code.
+    ENDLOOP.
+    CONCATENATE LINES OF lt_code INTO rv_code SEPARATED BY gc_newline.
 
   ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_method DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    METHODS:
+      constructor
+        IMPORTING iv_name TYPE string,
+      get_importing
+        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+      get_changing
+        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+      get_exception
+        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+      get_name
+        RETURNING VALUE(rv_name) TYPE string,
+      add_code
+        IMPORTING iv_code TYPE clike,
+      get_code
+        RETURNING VALUE(rv_code) TYPE string,
+      render
+        RETURNING VALUE(rv_code) TYPE string.
+
+  PRIVATE SECTION.
+
+    DATA:
+      mv_name       TYPE string,
+      mo_importing  TYPE REF TO lcl_parameter_list,
+      mo_changing   TYPE REF TO lcl_parameter_list,
+      mo_exceptions TYPE REF TO lcl_parameter_list,
+      mv_code       TYPE string.
+
+ENDCLASS.
+
+CLASS lcl_method IMPLEMENTATION.
+
+  METHOD get_code.
+
+    rv_code = mv_code.
+
+  ENDMETHOD.
+
+  METHOD add_code.
+
+    CONCATENATE mv_code iv_code INTO mv_code.
+
+  ENDMETHOD.
+
+  METHOD render.
+
+    rv_code = mv_name && gc_newline.
+    IF mo_importing->size( ) > 0.
+      rv_code = rv_code && 'IMPORTING' && gc_newline.
+      rv_code = rv_code && mo_importing->render( ) && gc_newline.
+    ENDIF.
+    IF mo_changing->size( ) > 0.
+      rv_code = rv_code && 'CHANGING' && gc_newline.
+      rv_code = rv_code && mo_changing->render( ) && gc_newline.
+    ENDIF.
+    IF mo_exceptions->size( ) > 0.
+      rv_code = rv_code && 'RAISING' && gc_newline.
+      rv_code = rv_code && mo_exceptions->render( abap_true ) && gc_newline.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD get_name.
+    rv_name = mv_name.
+  ENDMETHOD.
+
+  METHOD get_importing.
+
+    ro_list = mo_importing.
+
+  ENDMETHOD.
+
+  METHOD get_changing.
+
+    ro_list = mo_changing.
+
+  ENDMETHOD.
+
+  METHOD get_exception.
+
+    ro_list = mo_exceptions.
+
+  ENDMETHOD.
+
+  METHOD constructor.
+
+    mv_name = iv_name.
+
+    CREATE OBJECT mo_importing.
+    CREATE OBJECT mo_changing.
+    CREATE OBJECT mo_exceptions.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_class DEFINITION FINAL.
+
+  PUBLIC SECTION.
+
+    METHODS:
+      constructor
+        IMPORTING iv_name TYPE string,
+      add_method
+        IMPORTING iv_name          TYPE string
+        RETURNING VALUE(ro_method) TYPE REF TO lcl_method,
+      get_method
+        IMPORTING iv_name          TYPE string
+        RETURNING VALUE(ro_method) TYPE REF TO lcl_method
+        RAISING   lcx_exception,
+      render_definition
+        RETURNING VALUE(rv_code) TYPE string,
+      render_implementation
+        RETURNING VALUE(rv_code) TYPE string.
+
+  PRIVATE SECTION.
+
+    DATA: mv_name    TYPE string,
+          mt_methods TYPE TABLE OF REF TO lcl_method.
+
+ENDCLASS.
+
+CLASS lcl_class IMPLEMENTATION.
+
+  METHOD constructor.
+
+    mv_name = iv_name.
+
+  ENDMETHOD.
+
+  METHOD get_method.
+
+    DATA: lo_method TYPE REF TO lcl_method.
+
+
+    LOOP AT mt_methods INTO lo_method.
+      IF lo_method->get_name( ) = iv_name.
+        ro_method = lo_method.
+      ENDIF.
+    ENDLOOP.
+
+    IF ro_method IS INITIAL.
+      _raise 'method not found'.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD add_method.
+
+    CREATE OBJECT ro_method
+      EXPORTING
+        iv_name = iv_name.
+
+    APPEND ro_method TO mt_methods.
+
+  ENDMETHOD.
+
+  METHOD render_implementation.
+
+    DATA: lv_name   TYPE string,
+          lo_method TYPE REF TO lcl_method.
+
+
+    CONCATENATE 'CLASS' mv_name 'IMPLEMENTATION' INTO rv_code SEPARATED BY space.
+    rv_code = rv_code && '.' && gc_newline && gc_newline.
+
+    LOOP AT mt_methods INTO lo_method.
+      lv_name = lo_method->get_name( ).
+      CONCATENATE rv_code 'METHOD' lv_name INTO rv_code SEPARATED BY space.
+      CONCATENATE rv_code '.' gc_newline INTO rv_code.
+      rv_code = rv_code && lo_method->get_code( ).
+      CONCATENATE rv_code 'ENDMETHOD.' gc_newline gc_newline INTO rv_code.
+    ENDLOOP.
+
+    rv_code = rv_code && 'ENDCLASS.' && gc_newline.
+
+  ENDMETHOD.
+
+  METHOD render_definition.
+
+    DATA: lv_comma_newline TYPE c LENGTH 2,
+          lt_code          TYPE TABLE OF string,
+          lv_code          TYPE string,
+          lo_method        TYPE REF TO lcl_method.
+
+
+    CONCATENATE 'CLASS' mv_name 'DEFINITION' 'FINAL' INTO rv_code SEPARATED BY space.
+    rv_code = rv_code && '.' && gc_newline && gc_newline.
+    rv_code = rv_code && 'PUBLIC SECTION.' && gc_newline && gc_newline.
+    rv_code = rv_code && 'CLASS-METHODS:' && gc_newline.
+
+    LOOP AT mt_methods INTO lo_method.
+      APPEND lo_method->render( ) TO lt_code.
+    ENDLOOP.
+    IF sy-subrc = 0.
+      CONCATENATE ',' gc_newline INTO lv_comma_newline.
+      CONCATENATE LINES OF lt_code INTO lv_code SEPARATED BY lv_comma_newline.
+      CONCATENATE rv_code lv_code '.' gc_newline INTO rv_code.
+    ENDIF.
+
+    rv_code = rv_code && 'ENDCLASS.' && gc_newline && gc_newline.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_source DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    CLASS-METHODS:
+      read
+        IMPORTING iv_program       TYPE rpy_prog-progname
+        RETURNING VALUE(rv_source) TYPE string,
+      pretty_print
+        IMPORTING iv_source        TYPE string
+        RETURNING VALUE(rv_source) TYPE string
+        RAISING   lcx_exception.
+
+ENDCLASS.
+
+CLASS lcl_source IMPLEMENTATION.
 
   METHOD pretty_print.
 
     DATA: ls_rseumod TYPE rseumod,
+          lt_pretty  TYPE TABLE OF string,
           lv_option  TYPE c LENGTH 5.
 
 
@@ -201,24 +400,272 @@ CLASS lcl_logic IMPLEMENTATION.
       lv_option = 'UPPER'.
     ENDIF.
 
-*    CALL FUNCTION 'CREATE_PRETTY_PRINT_FORMAT'
-*      EXPORTING
-*        mode          = lv_option
-**      TABLES
-**       source        = lt_pretty
-*      EXCEPTIONS
-*        syntax_errors = 1.
-*if sy-subrc <> 0.
-** todo
-*endif.
+    SPLIT iv_source AT gc_newline INTO TABLE lt_pretty.
+
+    CALL FUNCTION 'CREATE_PRETTY_PRINT_FORMAT'
+      EXPORTING
+        mode          = lv_option
+      TABLES
+        source        = lt_pretty
+      EXCEPTIONS
+        syntax_errors = 1.
+    IF sy-subrc <> 0.
+      _raise 'pretty printer error'.
+    ENDIF.
+
+    CONCATENATE LINES OF lt_pretty INTO rv_source SEPARATED BY gc_newline.
+
+* todo, indentation?
+
+  ENDMETHOD.
+
+  METHOD read.
+
+    DATA: lt_source TYPE TABLE OF abaptxt255.
+
+
+    CALL FUNCTION 'RPY_PROGRAM_READ'
+      EXPORTING
+        program_name     = iv_program
+        with_lowercase   = abap_true
+      TABLES
+        source_extended  = lt_source
+      EXCEPTIONS
+        cancelled        = 1
+        not_found        = 2
+        permission_error = 3
+        OTHERS           = 4. "#EC CI_SUBRC
+    ASSERT sy-subrc = 0.
+
+    CONCATENATE LINES OF lt_source INTO rv_source
+      SEPARATED BY gc_newline.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_logic DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    CLASS-METHODS: run RAISING lcx_exception.
+
+    CLASS-DATA: gv_input  TYPE string READ-ONLY,
+                gv_output TYPE string READ-ONLY.
+
+  PRIVATE SECTION.
+
+    CLASS-DATA:
+      go_class  TYPE REF TO lcl_class,
+      go_method TYPE REF TO lcl_method.
+
+    CLASS-METHODS:
+      add_code
+        IMPORTING iv_code TYPE clike,
+      loop
+        IMPORTING iv_source TYPE string
+        RAISING   lcx_exception,
+      handle_statement
+        IMPORTING iv_statement        TYPE string
+        RETURNING VALUE(rv_statement) TYPE string
+        RAISING   lcx_exception,
+      build_signature
+        IMPORTING iv_statement TYPE string
+        RAISING   lcx_exception,
+      parse_statement
+        IMPORTING iv_statement        TYPE string
+        RETURNING VALUE(rv_statement) TYPE string
+        RAISING   lcx_exception,
+      handle_form
+        IMPORTING is_result TYPE zcl_aoc_parser=>st_result
+        RAISING   lcx_exception,
+      handle_perform
+        IMPORTING is_result           TYPE zcl_aoc_parser=>st_result
+        RETURNING VALUE(rv_statement) TYPE string.
+
+ENDCLASS.
+
+CLASS lcl_logic IMPLEMENTATION.
+
+  METHOD build_signature.
+
+    DATA: lt_code      TYPE TABLE OF string,
+          lv_statement TYPE string,
+          lo_method    TYPE REF TO lcl_method,
+          lo_parameter TYPE REF TO lcl_parameter,
+          lo_list      TYPE REF TO lcl_parameter_list,
+          ls_result    TYPE zcl_aoc_parser=>st_result.
+
+    FIELD-SYMBOLS: <ls_token> LIKE LINE OF ls_result-tokens.
+
+
+    lv_statement = iv_statement.
+    REPLACE ALL OCCURRENCES OF gc_newline IN lv_statement WITH space.
+    APPEND lv_statement TO lt_code.
+    ls_result = zcl_aoc_parser=>run( lt_code ).
+    IF ls_result-match = abap_false.
+      _raise 'Error parsing code'.
+    ENDIF.
+
+    LOOP AT ls_result-tokens ASSIGNING <ls_token>.
+      CASE <ls_token>-value.
+        WHEN 'FormDefId'.
+          lo_method = go_class->add_method( <ls_token>-code ).
+        WHEN 'FORM_USING'.
+          lo_list = lo_method->get_importing( ).
+        WHEN 'FORM_CHANGING'.
+          lo_list = lo_method->get_changing( ).
+        WHEN 'FORM_RAISING'.
+          lo_list = lo_method->get_exception( ).
+        WHEN 'FieldDefId' OR 'ClassexcTypeId'.
+          lo_parameter = lo_list->add( <ls_token>-code ).
+        WHEN 'TypeId'.
+          lo_parameter->set_type( <ls_token>-code ).
+      ENDCASE.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD handle_form.
+
+    FIELD-SYMBOLS: <ls_token> LIKE LINE OF is_result-tokens.
+
+
+    READ TABLE is_result-tokens ASSIGNING <ls_token> WITH KEY value = 'FormDefId'.
+    ASSERT sy-subrc = 0.
+
+    go_method = go_class->get_method( <ls_token>-code ).
+
+  ENDMETHOD.
+
+  METHOD handle_perform.
+
+    FIELD-SYMBOLS: <ls_token> LIKE LINE OF is_result-tokens.
+
+
+    READ TABLE is_result-tokens ASSIGNING <ls_token> WITH KEY value = 'FormId'.
+    ASSERT sy-subrc = 0.
+    CONCATENATE 'lcl_app=>' <ls_token>-code '(' INTO rv_statement.
+    CONCATENATE rv_statement ')' INTO rv_statement SEPARATED BY space.
+    CONCATENATE rv_statement '.' gc_newline INTO rv_statement.
+
+    LOOP AT is_result-tokens ASSIGNING <ls_token>.
+* todo
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD add_code.
+    IF go_method IS BOUND.
+      go_method->add_code( iv_code ).
+    ELSE.
+      CONCATENATE gv_output iv_code INTO gv_output.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD loop.
+
+    DATA: lv_statement TYPE string,
+          lt_source    TYPE TABLE OF string,
+          lv_line      LIKE LINE OF lt_source.
+
+
+    SPLIT iv_source AT gc_newline INTO TABLE lt_source.
+
+    LOOP AT lt_source INTO lv_line.
+      CONCATENATE lv_statement lv_line gc_newline
+        INTO lv_statement.
+      CONDENSE lv_statement.
+
+      IF lv_statement CP 'FORM *.+'.
+        build_signature( lv_statement ).
+        CLEAR lv_statement.
+      ELSEIF lv_statement CP '*.+' OR lv_statement = gc_newline.
+        CLEAR lv_statement.
+      ENDIF.
+    ENDLOOP.
+
+    LOOP AT lt_source INTO lv_line.
+      CONCATENATE lv_statement lv_line gc_newline
+        INTO lv_statement.
+
+      IF lv_statement = gc_newline.
+        add_code( gc_newline ).
+        CLEAR lv_statement.
+      ELSEIF lv_statement CP '*.+'.
+        lv_statement = handle_statement( lv_statement ).
+        add_code( lv_statement ).
+        CLEAR lv_statement.
+      ENDIF.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD handle_statement.
+
+    DATA: lv_condensed TYPE string.
+
+
+    rv_statement = iv_statement.
+    lv_condensed = iv_statement.
+    CONDENSE lv_condensed.
+
+    IF lv_condensed CP 'REPORT *'.
+      CLEAR rv_statement.
+    ELSEIF lv_condensed CP 'FORM *'
+        OR lv_condensed CP 'ENDFORM.*'
+        OR lv_condensed CP 'PERFORM *'.
+      rv_statement = parse_statement( iv_statement ).
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD parse_statement.
+
+    DATA: lt_code      TYPE TABLE OF string,
+          lv_statement TYPE string,
+          ls_result    TYPE zcl_aoc_parser=>st_result.
+
+    FIELD-SYMBOLS: <ls_token> LIKE LINE OF ls_result-tokens.
+
+
+    lv_statement = iv_statement.
+    REPLACE ALL OCCURRENCES OF gc_newline IN lv_statement WITH space.
+    APPEND lv_statement TO lt_code.
+    ls_result = zcl_aoc_parser=>run( lt_code ).
+    IF ls_result-match = abap_false.
+      _raise 'Error parsing code'.
+    ENDIF.
+
+    READ TABLE ls_result-tokens ASSIGNING <ls_token> WITH KEY type = 'T'.
+    ASSERT sy-subrc = 0.
+    CASE <ls_token>-rulename.
+      WHEN 'FORM'.
+        handle_form( ls_result ).
+      WHEN 'PERFORM_INTERN'.
+        rv_statement = handle_perform( ls_result ).
+      WHEN 'ENDFORM'.
+        CLEAR go_method.
+      WHEN OTHERS.
+        BREAK-POINT.
+    ENDCASE.
 
   ENDMETHOD.
 
   METHOD run.
 
-    read_report( ).
-    loop( ).
-    pretty_print( ).
+    CREATE OBJECT go_class
+      EXPORTING
+        iv_name = 'LCL_APP'.
+
+    gv_input = lcl_source=>read( p_prog ).
+    loop( gv_input ).
+    gv_output =
+      'REPORT zfoobar.' && gc_newline && gc_newline &&
+      go_class->render_definition( ) &&
+      go_class->render_implementation( ) &&
+      gv_output.
+    gv_output = lcl_source=>pretty_print( gv_output ).
 
   ENDMETHOD.
 
@@ -257,8 +704,10 @@ CLASS lcl_gui IMPLEMENTATION.
         rows    = 1
         columns = 2.
 
-    lo_left  = go_splitter->get_container( row = 1 column = 1 ).
-    lo_right = go_splitter->get_container( row = 1 column = 2 ).
+    lo_left  = go_splitter->get_container( row    = 1
+                                           column = 1 ).
+    lo_right = go_splitter->get_container( row    = 1
+                                           column = 2 ).
 
     CREATE OBJECT go_text1
       EXPORTING
