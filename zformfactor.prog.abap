@@ -26,9 +26,12 @@ REPORT zformfactor.
 * SOFTWARE.
 ********************************************************************************
 
+* todo, pre-FORM comments, another pass, leeloo multipass?
+
 DATA: gv_ok_code LIKE sy-ucomm.
 
-CONSTANTS: gc_newline TYPE c VALUE cl_abap_char_utilities=>newline.
+CONSTANTS: gc_tab TYPE c LENGTH 2 VALUE '  ',
+           gc_newline TYPE c VALUE cl_abap_char_utilities=>newline.
 
 DEFINE _raise.
   raise exception type lcx_exception
@@ -50,6 +53,11 @@ CLASS lcx_exception DEFINITION INHERITING FROM cx_static_check FINAL.
 
 ENDCLASS.                    "CX_LOCAL_EXCEPTION DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcx_exception IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcx_exception IMPLEMENTATION.
 
   METHOD constructor.
@@ -57,8 +65,13 @@ CLASS lcx_exception IMPLEMENTATION.
     mv_text = iv_text.
   ENDMETHOD.                    "CONSTRUCTOR
 
-ENDCLASS.
+ENDCLASS.                    "lcx_exception IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_parameter DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_parameter DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -66,68 +79,87 @@ CLASS lcl_parameter DEFINITION FINAL.
       constructor
         IMPORTING iv_name TYPE string,
       get_name
-        RETURNING VALUE(rv_name) TYPE string,
+        RETURNING value(rv_name) TYPE string,
       set_type
         IMPORTING iv_type TYPE string,
       render
         IMPORTING iv_no_type     TYPE abap_bool DEFAULT abap_false
-        RETURNING VALUE(rv_code) TYPE string.
+        RETURNING value(rv_code) TYPE string.
 
   PRIVATE SECTION.
     DATA: mv_name TYPE string,
           mv_type TYPE string.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_parameter DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_parameter IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_parameter IMPLEMENTATION.
 
   METHOD constructor.
 
     mv_name = iv_name.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "constructor
 
   METHOD get_name.
     rv_name = mv_name.
-  ENDMETHOD.
+  ENDMETHOD.                    "get_name
 
   METHOD set_type.
     mv_type = iv_type.
-  ENDMETHOD.
+  ENDMETHOD.                    "set_type
 
   METHOD render.
     IF iv_no_type = abap_true.
       rv_code = mv_name.
     ELSE.
-      CONCATENATE mv_name 'TYPE' mv_type INTO rv_code SEPARATED BY space.
+      CONCATENATE mv_name 'TYPE' mv_type
+        INTO rv_code SEPARATED BY space.
     ENDIF.
-  ENDMETHOD.
 
-ENDCLASS.
+    CONCATENATE gc_tab gc_tab gc_tab gc_tab gc_tab rv_code
+      INTO rv_code RESPECTING BLANKS.
+  ENDMETHOD.                    "render
 
+ENDCLASS.                    "lcl_parameter IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_parameter_list DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_parameter_list DEFINITION FINAL.
 
   PUBLIC SECTION.
     METHODS:
       size
-        RETURNING VALUE(rv_size) TYPE i,
+        RETURNING value(rv_size) TYPE i,
       add
         IMPORTING iv_name             TYPE string
-        RETURNING VALUE(ro_parameter) TYPE REF  TO lcl_parameter,
+        RETURNING value(ro_parameter) TYPE REF  TO lcl_parameter,
       render
         IMPORTING iv_no_type     TYPE abap_bool DEFAULT abap_false
-        RETURNING VALUE(rv_code) TYPE string.
+        RETURNING value(rv_code) TYPE string.
 
   PRIVATE SECTION.
     DATA: mt_list TYPE TABLE OF REF TO lcl_parameter.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_parameter_list DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_parameter_list IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_parameter_list IMPLEMENTATION.
 
   METHOD size.
     rv_size = lines( mt_list ).
-  ENDMETHOD.
+  ENDMETHOD.                    "size
 
   METHOD add.
 
@@ -136,7 +168,7 @@ CLASS lcl_parameter_list IMPLEMENTATION.
         iv_name = iv_name.
     APPEND ro_parameter TO mt_list.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "add
 
   METHOD render.
 
@@ -149,10 +181,15 @@ CLASS lcl_parameter_list IMPLEMENTATION.
     ENDLOOP.
     CONCATENATE LINES OF lt_code INTO rv_code SEPARATED BY gc_newline.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "render
 
-ENDCLASS.
+ENDCLASS.                    "lcl_parameter_list IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_method DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_method DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -160,19 +197,19 @@ CLASS lcl_method DEFINITION FINAL.
       constructor
         IMPORTING iv_name TYPE string,
       get_importing
-        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+        RETURNING value(ro_list) TYPE REF TO lcl_parameter_list,
       get_changing
-        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+        RETURNING value(ro_list) TYPE REF TO lcl_parameter_list,
       get_exception
-        RETURNING VALUE(ro_list) TYPE REF TO lcl_parameter_list,
+        RETURNING value(ro_list) TYPE REF TO lcl_parameter_list,
       get_name
-        RETURNING VALUE(rv_name) TYPE string,
+        RETURNING value(rv_name) TYPE string,
       add_code
         IMPORTING iv_code TYPE clike,
       get_code
-        RETURNING VALUE(rv_code) TYPE string,
+        RETURNING value(rv_code) TYPE string,
       render
-        RETURNING VALUE(rv_code) TYPE string.
+        RETURNING value(rv_code) TYPE string.
 
   PRIVATE SECTION.
 
@@ -183,61 +220,76 @@ CLASS lcl_method DEFINITION FINAL.
       mo_exceptions TYPE REF TO lcl_parameter_list,
       mv_code       TYPE string.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_method DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_method IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_method IMPLEMENTATION.
 
   METHOD get_code.
 
     rv_code = mv_code.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "get_code
 
   METHOD add_code.
 
     CONCATENATE mv_code iv_code INTO mv_code.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "add_code
 
   METHOD render.
 
-    rv_code = mv_name && gc_newline.
+    DATA: lv_len TYPE i.
+
+
+    CONCATENATE gc_tab gc_tab gc_tab mv_name gc_newline
+      INTO rv_code RESPECTING BLANKS.
     IF mo_importing->size( ) > 0.
-      rv_code = rv_code && 'IMPORTING' && gc_newline.
+      CONCATENATE rv_code gc_tab gc_tab gc_tab gc_tab 'IMPORTING' gc_newline
+        INTO rv_code RESPECTING BLANKS.
       rv_code = rv_code && mo_importing->render( ) && gc_newline.
     ENDIF.
     IF mo_changing->size( ) > 0.
-      rv_code = rv_code && 'CHANGING' && gc_newline.
+      CONCATENATE rv_code gc_tab gc_tab gc_tab gc_tab 'CHANGING' gc_newline
+        INTO rv_code RESPECTING BLANKS.
       rv_code = rv_code && mo_changing->render( ) && gc_newline.
     ENDIF.
     IF mo_exceptions->size( ) > 0.
-      rv_code = rv_code && 'RAISING' && gc_newline.
+      CONCATENATE rv_code gc_tab gc_tab gc_tab gc_tab 'RAISING' gc_newline
+        INTO rv_code RESPECTING BLANKS.
       rv_code = rv_code && mo_exceptions->render( abap_true ) && gc_newline.
     ENDIF.
 
-  ENDMETHOD.
+    lv_len = strlen( rv_code ) - 1.
+    rv_code = rv_code(lv_len).
+
+  ENDMETHOD.                    "render
 
   METHOD get_name.
     rv_name = mv_name.
-  ENDMETHOD.
+  ENDMETHOD.                    "get_name
 
   METHOD get_importing.
 
     ro_list = mo_importing.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "get_importing
 
   METHOD get_changing.
 
     ro_list = mo_changing.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "get_changing
 
   METHOD get_exception.
 
     ro_list = mo_exceptions.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "get_exception
 
   METHOD constructor.
 
@@ -247,10 +299,15 @@ CLASS lcl_method IMPLEMENTATION.
     CREATE OBJECT mo_changing.
     CREATE OBJECT mo_exceptions.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "constructor
 
-ENDCLASS.
+ENDCLASS.                    "lcl_method IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_class DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_class DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -260,30 +317,35 @@ CLASS lcl_class DEFINITION FINAL.
         IMPORTING iv_name TYPE string,
       add_method
         IMPORTING iv_name          TYPE string
-        RETURNING VALUE(ro_method) TYPE REF TO lcl_method,
+        RETURNING value(ro_method) TYPE REF TO lcl_method,
       get_method
         IMPORTING iv_name          TYPE string
-        RETURNING VALUE(ro_method) TYPE REF TO lcl_method
+        RETURNING value(ro_method) TYPE REF TO lcl_method
         RAISING   lcx_exception,
       render_definition
-        RETURNING VALUE(rv_code) TYPE string,
+        RETURNING value(rv_code) TYPE string,
       render_implementation
-        RETURNING VALUE(rv_code) TYPE string.
+        RETURNING value(rv_code) TYPE string.
 
   PRIVATE SECTION.
 
     DATA: mv_name    TYPE string,
           mt_methods TYPE TABLE OF REF TO lcl_method.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_class DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_class IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_class IMPLEMENTATION.
 
   METHOD constructor.
 
     mv_name = iv_name.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "constructor
 
   METHOD get_method.
 
@@ -300,7 +362,7 @@ CLASS lcl_class IMPLEMENTATION.
       _raise 'method not found'.
     ENDIF.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "get_method
 
   METHOD add_method.
 
@@ -310,7 +372,7 @@ CLASS lcl_class IMPLEMENTATION.
 
     APPEND ro_method TO mt_methods.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "add_method
 
   METHOD render_implementation.
 
@@ -329,9 +391,9 @@ CLASS lcl_class IMPLEMENTATION.
       CONCATENATE rv_code 'ENDMETHOD.' gc_newline gc_newline INTO rv_code.
     ENDLOOP.
 
-    rv_code = rv_code && 'ENDCLASS.' && gc_newline.
+    rv_code = rv_code && gc_newline && 'ENDCLASS.' && gc_newline.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "render_implementation
 
   METHOD render_definition.
 
@@ -341,10 +403,14 @@ CLASS lcl_class IMPLEMENTATION.
           lo_method        TYPE REF TO lcl_method.
 
 
-    CONCATENATE 'CLASS' mv_name 'DEFINITION' 'FINAL' INTO rv_code SEPARATED BY space.
-    rv_code = rv_code && '.' && gc_newline && gc_newline.
-    rv_code = rv_code && 'PUBLIC SECTION.' && gc_newline && gc_newline.
-    rv_code = rv_code && 'CLASS-METHODS:' && gc_newline.
+    CONCATENATE 'CLASS' mv_name 'DEFINITION' 'FINAL'
+      INTO rv_code SEPARATED BY space.
+    CONCATENATE rv_code '.' gc_newline gc_newline
+      INTO rv_code.
+    CONCATENATE rv_code gc_tab 'PUBLIC SECTION.' gc_newline gc_newline
+      INTO rv_code RESPECTING BLANKS.
+    CONCATENATE rv_code gc_tab gc_tab 'CLASS-METHODS:' gc_newline
+      INTO rv_code RESPECTING BLANKS.
 
     LOOP AT mt_methods INTO lo_method.
       APPEND lo_method->render( ) TO lt_code.
@@ -357,24 +423,34 @@ CLASS lcl_class IMPLEMENTATION.
 
     rv_code = rv_code && 'ENDCLASS.' && gc_newline && gc_newline.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "render_definition
 
-ENDCLASS.
+ENDCLASS.                    "lcl_class IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_source DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_source DEFINITION FINAL.
 
   PUBLIC SECTION.
     CLASS-METHODS:
       read
         IMPORTING iv_program       TYPE rpy_prog-progname
-        RETURNING VALUE(rv_source) TYPE string,
+        RETURNING value(rv_source) TYPE string,
       pretty_print
         IMPORTING iv_source        TYPE string
-        RETURNING VALUE(rv_source) TYPE string
+        RETURNING value(rv_source) TYPE string
         RAISING   lcx_exception.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_source DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_source IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_source IMPLEMENTATION.
 
   METHOD pretty_print.
@@ -415,9 +491,7 @@ CLASS lcl_source IMPLEMENTATION.
 
     CONCATENATE LINES OF lt_pretty INTO rv_source SEPARATED BY gc_newline.
 
-* todo, indentation?
-
-  ENDMETHOD.
+  ENDMETHOD.                    "pretty_print
 
   METHOD read.
 
@@ -434,16 +508,21 @@ CLASS lcl_source IMPLEMENTATION.
         cancelled        = 1
         not_found        = 2
         permission_error = 3
-        OTHERS           = 4. "#EC CI_SUBRC
+        OTHERS           = 4.                             "#EC CI_SUBRC
     ASSERT sy-subrc = 0.
 
     CONCATENATE LINES OF lt_source INTO rv_source
       SEPARATED BY gc_newline.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "read
 
-ENDCLASS.
+ENDCLASS.                    "lcl_source IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_logic DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_logic DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -466,24 +545,29 @@ CLASS lcl_logic DEFINITION FINAL.
         RAISING   lcx_exception,
       handle_statement
         IMPORTING iv_statement        TYPE string
-        RETURNING VALUE(rv_statement) TYPE string
+        RETURNING value(rv_statement) TYPE string
         RAISING   lcx_exception,
       build_signature
         IMPORTING iv_statement TYPE string
         RAISING   lcx_exception,
       parse_statement
         IMPORTING iv_statement        TYPE string
-        RETURNING VALUE(rv_statement) TYPE string
+        RETURNING value(rv_statement) TYPE string
         RAISING   lcx_exception,
       handle_form
         IMPORTING is_result TYPE zcl_aoc_parser=>st_result
         RAISING   lcx_exception,
       handle_perform
         IMPORTING is_result           TYPE zcl_aoc_parser=>st_result
-        RETURNING VALUE(rv_statement) TYPE string.
+        RETURNING value(rv_statement) TYPE string.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_logic DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_logic IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_logic IMPLEMENTATION.
 
   METHOD build_signature.
@@ -524,7 +608,7 @@ CLASS lcl_logic IMPLEMENTATION.
 
     ENDLOOP.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "build_signature
 
   METHOD handle_form.
 
@@ -536,7 +620,7 @@ CLASS lcl_logic IMPLEMENTATION.
 
     go_method = go_class->get_method( <ls_token>-code ).
 
-  ENDMETHOD.
+  ENDMETHOD.                    "handle_form
 
   METHOD handle_perform.
 
@@ -553,7 +637,7 @@ CLASS lcl_logic IMPLEMENTATION.
 * todo
     ENDLOOP.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "handle_perform
 
   METHOD add_code.
     IF go_method IS BOUND.
@@ -561,7 +645,7 @@ CLASS lcl_logic IMPLEMENTATION.
     ELSE.
       CONCATENATE gv_output iv_code INTO gv_output.
     ENDIF.
-  ENDMETHOD.
+  ENDMETHOD.                    "add_code
 
   METHOD loop.
 
@@ -577,10 +661,14 @@ CLASS lcl_logic IMPLEMENTATION.
         INTO lv_statement.
       CONDENSE lv_statement.
 
+* todo, use proper parser?
       IF lv_statement CP 'FORM *.+'.
         build_signature( lv_statement ).
         CLEAR lv_statement.
-      ELSEIF lv_statement CP '*.+' OR lv_statement = gc_newline.
+      ELSEIF lv_statement CP '*.+'
+          OR ( strlen( lv_statement ) >= 8 AND lv_statement(8) = 'ENDFORM.' )
+          OR lv_statement = gc_newline
+          OR lv_statement CP '#**'.
         CLEAR lv_statement.
       ENDIF.
     ENDLOOP.
@@ -589,17 +677,19 @@ CLASS lcl_logic IMPLEMENTATION.
       CONCATENATE lv_statement lv_line gc_newline
         INTO lv_statement.
 
-      IF lv_statement = gc_newline.
-        add_code( gc_newline ).
+      IF lv_statement = gc_newline
+          OR lv_statement CP '#**'.
+        add_code( lv_statement ).
         CLEAR lv_statement.
-      ELSEIF lv_statement CP '*.+'.
+      ELSEIF lv_statement CP '*.+'
+          OR ( strlen( lv_statement ) >= 8 AND lv_statement(8) = 'ENDFORM.' ).
         lv_statement = handle_statement( lv_statement ).
         add_code( lv_statement ).
         CLEAR lv_statement.
       ENDIF.
     ENDLOOP.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "loop
 
   METHOD handle_statement.
 
@@ -618,7 +708,7 @@ CLASS lcl_logic IMPLEMENTATION.
       rv_statement = parse_statement( iv_statement ).
     ENDIF.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "handle_statement
 
   METHOD parse_statement.
 
@@ -650,7 +740,7 @@ CLASS lcl_logic IMPLEMENTATION.
         BREAK-POINT.
     ENDCASE.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "parse_statement
 
   METHOD run.
 
@@ -667,10 +757,15 @@ CLASS lcl_logic IMPLEMENTATION.
       gv_output.
     gv_output = lcl_source=>pretty_print( gv_output ).
 
-  ENDMETHOD.
+  ENDMETHOD.                    "run
 
-ENDCLASS.
+ENDCLASS.                    "lcl_logic IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_gui DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_gui DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -685,8 +780,13 @@ CLASS lcl_gui DEFINITION FINAL.
       go_text1    TYPE REF TO cl_gui_textedit,
       go_text2    TYPE REF TO cl_gui_textedit.
 
-ENDCLASS.
+ENDCLASS.                    "lcl_gui DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_gui IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_gui IMPLEMENTATION.
 
   METHOD pbo.
@@ -716,6 +816,8 @@ CLASS lcl_gui IMPLEMENTATION.
     go_text1->set_statusbar_mode( 0 ).
     go_text1->set_readonly_mode( 1 ).
     go_text1->set_font_fixed( ).
+    go_text1->set_wordwrap_behavior(
+      wordwrap_mode = cl_gui_textedit=>wordwrap_off ).
     go_text1->set_textstream( lcl_logic=>gv_input ).
 
     CREATE OBJECT go_text2
@@ -725,12 +827,14 @@ CLASS lcl_gui IMPLEMENTATION.
     go_text2->set_statusbar_mode( 0 ).
     go_text2->set_readonly_mode( 1 ).
     go_text2->set_font_fixed( ).
+    go_text1->set_wordwrap_behavior(
+      wordwrap_mode = cl_gui_textedit=>wordwrap_off ).
     go_text2->set_textstream( lcl_logic=>gv_output ).
 
     SET TITLEBAR 'TITLE_3000'.
     SET PF-STATUS 'STATUS_3000'.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "pbo
 
   METHOD pai.
 
@@ -740,16 +844,21 @@ CLASS lcl_gui IMPLEMENTATION.
         LEAVE TO SCREEN 0.
     ENDCASE.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "pai
 
   METHOD run.
 
     CALL SCREEN 3000.
 
-  ENDMETHOD.
+  ENDMETHOD.                    "run
 
-ENDCLASS.
+ENDCLASS.                    "lcl_gui IMPLEMENTATION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_app DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_app DEFINITION FINAL.
 
   PUBLIC SECTION.
@@ -757,6 +866,11 @@ CLASS lcl_app DEFINITION FINAL.
 
 ENDCLASS.                    "lcl_app DEFINITION
 
+*----------------------------------------------------------------------*
+*       CLASS lcl_app IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 CLASS lcl_app IMPLEMENTATION.
 
   METHOD run.
@@ -777,10 +891,20 @@ ENDCLASS.                    "lcl_app IMPLEMENTATION
 START-OF-SELECTION.
   lcl_app=>run( ).
 
+*----------------------------------------------------------------------*
+*  MODULE status_3000 OUTPUT
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 MODULE status_3000 OUTPUT.
   lcl_gui=>pbo( ).
-ENDMODULE.
+ENDMODULE.                    "status_3000 OUTPUT
 
+*----------------------------------------------------------------------*
+*  MODULE user_command_3000 INPUT
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
 MODULE user_command_3000 INPUT.
   lcl_gui=>pai( ).
-ENDMODULE.
+ENDMODULE.                    "user_command_3000 INPUT
