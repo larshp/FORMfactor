@@ -1,6 +1,14 @@
 # FORMfactor
-work in progress
+Helps refactoring old FORM based programs to local classes with static methods.
 
-Does not work with new 740 language constructs.
+Limitations:
+- Does not work with new 740 language constructs
+- TABLES parameters not implemented yet
 
-Install using abapGit, abapOpenChecks must be installed before installing FORMfactor.
+Installation:
+
+1. Install [abapGit](https://github.com/larshp/abapGit)
+2. Install [abapOpenChecks](https://github.com/larshp/abapOpenChecks) using abapGit
+3. Install FORMfactor
+4. Run via report ZFORMFACTOR
+
