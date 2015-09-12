@@ -819,7 +819,8 @@ CLASS lcl_logic IMPLEMENTATION.
       _raise 'Error parsing code'.
     ENDIF.
 
-    READ TABLE ls_result-tokens ASSIGNING <ls_token> WITH KEY type = 'T'.
+    READ TABLE ls_result-tokens ASSIGNING <ls_token>
+      WITH KEY type = zcl_aoc_parser=>c_type-terminal.
     ASSERT sy-subrc = 0.
     CASE <ls_token>-rulename.
       WHEN 'FORM'.
