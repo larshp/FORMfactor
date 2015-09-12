@@ -260,19 +260,22 @@ CLASS lcl_method IMPLEMENTATION.
     rv_code = mv_name && '(' && gc_newline.
 
     IF mo_importing->size( ) > 0.
+      CONCATENATE rv_code gc_tab INTO rv_code RESPECTING BLANKS.
       rv_code = rv_code && 'EXPORTING' && gc_newline.
+
       DO mo_importing->size( ) TIMES.
         lo_parameter = mo_importing->get( sy-index ).
 
         lv_value = lt_values[ 1 ].
         lv_name = lo_parameter->get_name( ).
-        CONCATENATE rv_code lv_name ' = ' lv_value gc_newline
+        CONCATENATE rv_code gc_tab gc_tab lv_name ' = ' lv_value gc_newline
           INTO rv_code RESPECTING BLANKS.
         DELETE lt_values INDEX 1.
       ENDDO.
     ENDIF.
 
     IF mo_changing->size( ) > 0.
+      CONCATENATE rv_code gc_tab INTO rv_code RESPECTING BLANKS.
       rv_code = rv_code && 'CHANGING' && gc_newline.
 
       DO mo_changing->size( ) TIMES.
@@ -280,7 +283,7 @@ CLASS lcl_method IMPLEMENTATION.
 
         lv_value = lt_values[ 1 ].
         lv_name = lo_parameter->get_name( ).
-        CONCATENATE rv_code lv_name ' = ' lv_value gc_newline
+        CONCATENATE rv_code gc_tab gc_tab lv_name ' = ' lv_value gc_newline
           INTO rv_code RESPECTING BLANKS.
         DELETE lt_values INDEX 1.
       ENDDO.
@@ -474,7 +477,7 @@ CLASS lcl_class IMPLEMENTATION.
         INTO rv_code RESPECTING BLANKS.
     ENDLOOP.
 
-    rv_code = rv_code && gc_newline && 'ENDCLASS.' && gc_newline.
+    rv_code = rv_code && 'ENDCLASS.' && gc_newline.
 
   ENDMETHOD.                    "render_implementation
 
@@ -504,7 +507,7 @@ CLASS lcl_class IMPLEMENTATION.
       CONCATENATE rv_code lv_code '.' gc_newline INTO rv_code.
     ENDIF.
 
-    rv_code = rv_code && 'ENDCLASS.' && gc_newline && gc_newline.
+    rv_code = rv_code && gc_newline && 'ENDCLASS.' && gc_newline && gc_newline.
 
   ENDMETHOD.                    "render_definition
 
