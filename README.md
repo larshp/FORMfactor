@@ -1,6 +1,8 @@
 # FORMfactor
 Helps refactoring old FORM based programs to local classes with static methods.
 
+Also see https://github.com/larshp/FORMfactor-Eclipse
+
 ### Limitations
 - Does not work with new 740 language constructs
 - TABLES parameters not implemented yet
