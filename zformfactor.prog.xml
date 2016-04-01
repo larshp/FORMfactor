@@ -83,11 +83,6 @@
        <TC_SEL_CLS/>
        <TC_LSEL_CL/>
        <TC_FIXCOL>000</TC_FIXCOL>
-       <SP_ORIENTATION/>
-       <SP_SASH>000</SP_SASH>
-       <SP_FCODE/>
-       <SP_FTYPE/>
-       <SP_CELL_POSITION/>
        <CU_CC_NAME/>
        <SFW_SWITCHID/>
        <SFW_SHOWHIDE/>
@@ -126,7 +121,6 @@
        <PARAM_ID/>
        <SET_PARAM/>
        <GET_PARAM/>
-       <SIGN/>
        <UP_LOWER/>
        <NO_TEMPL/>
        <FOREIGNKEY/>
@@ -148,9 +142,6 @@
        <LABELRIGHT/>
        <LTR/>
        <BIDICTRL/>
-       <OUTPUTSTYLE>00</OUTPUTSTYLE>
-       <NOINPUTHISTORY/>
-       <AMPMENABLED/>
        <DBLCLICK/>
        <MATCHCODE/>
        <REF_FIELD/>
@@ -172,7 +163,7 @@
        <LINE>PROCESS BEFORE OUTPUT.</LINE>
       </RPY_DYFLOW>
       <RPY_DYFLOW>
-       <LINE>  MODULE status_3000.</LINE>
+       <LINE>MODULE status_3000.</LINE>
       </RPY_DYFLOW>
       <RPY_DYFLOW>
        <LINE/>
@@ -181,9 +172,16 @@
        <LINE>PROCESS AFTER INPUT.</LINE>
       </RPY_DYFLOW>
       <RPY_DYFLOW>
-       <LINE>  MODULE user_command_3000.</LINE>
+       <LINE>MODULE user_command_3000.</LINE>
       </RPY_DYFLOW>
      </FLOW_LOGIC>
+     <SPACES>
+      <item>0</item>
+      <item>2</item>
+      <item>0</item>
+      <item>0</item>
+      <item>2</item>
+     </SPACES>
     </item>
    </DYNPROS>
    <CUA>
