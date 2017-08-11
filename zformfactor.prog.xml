@@ -5,33 +5,10 @@
    <PROGDIR>
     <NAME>ZFORMFACTOR</NAME>
     <STATE>A</STATE>
-    <SQLX/>
-    <EDTX/>
     <VARCL>X</VARCL>
-    <DBAPL/>
-    <DBNA/>
-    <CLAS/>
-    <TYPE/>
-    <OCCURS/>
     <SUBC>1</SUBC>
-    <APPL/>
-    <SECU/>
-    <CNAM/>
-    <CDAT>0000-00-00</CDAT>
-    <UNAM/>
-    <UDAT>0000-00-00</UDAT>
-    <VERN/>
-    <LEVL/>
-    <RSTAT/>
-    <RMAND/>
     <RLOAD>E</RLOAD>
     <FIXPT>X</FIXPT>
-    <SSET/>
-    <SDATE>0000-00-00</SDATE>
-    <STIME/>
-    <IDATE>0000-00-00</IDATE>
-    <ITIME/>
-    <LDBNAME/>
     <UCCHECK>X</UCCHECK>
    </PROGDIR>
    <DYNPROS>
@@ -43,50 +20,13 @@
       <DESCRIPT>FORMfactor</DESCRIPT>
       <TYPE>N</TYPE>
       <NEXTSCREEN>3000</NEXTSCREEN>
-      <CURSOR_POS/>
-      <SCREEN_GRP/>
       <LINES>027</LINES>
       <COLUMNS>120</COLUMNS>
-      <HOLD_DATA/>
-      <FIXED_FONT/>
-      <NO_COMPR/>
-      <NO_EXECUTE/>
-      <KEEP_SCPOS/>
-      <NO_TOOLBAR/>
-      <CTX_MENON/>
      </HEADER>
      <CONTAINERS>
       <RPY_DYCATT>
        <TYPE>SCREEN</TYPE>
        <NAME>SCREEN</NAME>
-       <ELEMENT_OF/>
-       <LINE>000</LINE>
-       <COLUMN>000</COLUMN>
-       <LENGTH>000</LENGTH>
-       <HEIGHT>000</HEIGHT>
-       <LOOP_TYPE/>
-       <LOOP_BLOCK>000</LOOP_BLOCK>
-       <LOOP_DISP>000</LOOP_DISP>
-       <C_RESIZE_V/>
-       <C_RESIZE_H/>
-       <C_LINE_MIN>000</C_LINE_MIN>
-       <C_COLN_MIN>000</C_COLN_MIN>
-       <C_SCROLL_V/>
-       <C_SCROLL_H/>
-       <TC_TABTYPE/>
-       <TC_SEPAR_V/>
-       <TC_SEPAR_H/>
-       <TC_TITLE/>
-       <TC_HEADER/>
-       <TC_CONFIG/>
-       <TC_SEL_LNS/>
-       <TC_SEL_CLS/>
-       <TC_LSEL_CL/>
-       <TC_FIXCOL>000</TC_FIXCOL>
-       <CU_CC_NAME/>
-       <SFW_SWITCHID/>
-       <SFW_SHOWHIDE/>
-       <PROPERTIES/>
       </RPY_DYCATT>
      </CONTAINERS>
      <FIELDS>
@@ -96,66 +36,11 @@
        <TYPE>OKCODE</TYPE>
        <NAME>GV_OK_CODE</NAME>
        <TEXT>____________________</TEXT>
-       <DROPDOWN/>
-       <ICON_NAME/>
-       <ICON_QINFO/>
-       <ICON_QSPEC/>
-       <WITH_ICON/>
-       <ROLLING/>
-       <LINE>000</LINE>
-       <COLUMN>000</COLUMN>
        <LENGTH>020</LENGTH>
        <VISLENGTH>020</VISLENGTH>
        <HEIGHT>001</HEIGHT>
-       <GROUP1/>
-       <GROUP2/>
-       <GROUP3/>
-       <GROUP4/>
-       <PUSH_FCODE/>
-       <PUSH_FTYPE/>
-       <CXT_MENON/>
        <FORMAT>CHAR</FORMAT>
-       <FROM_DICT/>
-       <MODIFIC/>
-       <CONV_EXIT/>
-       <PARAM_ID/>
-       <SET_PARAM/>
-       <GET_PARAM/>
-       <UP_LOWER/>
-       <NO_TEMPL/>
-       <FOREIGNKEY/>
        <INPUT_FLD>X</INPUT_FLD>
-       <OUTPUT_FLD/>
-       <OUTPUTONLY/>
-       <REQU_ENTRY/>
-       <POSS_ENTRY/>
-       <DROPFROM/>
-       <RIGHT_JUST/>
-       <LEAD_ZEROS/>
-       <_--2A_ENTRY/>
-       <NO_RESET/>
-       <FIXED_FONT/>
-       <BRIGHT/>
-       <INVISIBLE/>
-       <_--32_DIMENS/>
-       <LABELLEFT/>
-       <LABELRIGHT/>
-       <LTR/>
-       <BIDICTRL/>
-       <DBLCLICK/>
-       <MATCHCODE/>
-       <REF_FIELD/>
-       <TC_TITLE/>
-       <TC_HEADING/>
-       <TC_SELCOL/>
-       <BUTT_RIGHT/>
-       <DICT_I_FKY/>
-       <DICT_I_FKD/>
-       <DICT_I_SGN/>
-       <DICT_I_VAL/>
-       <SFW_SWITCHID/>
-       <SFW_SHOWHIDE/>
-       <PROPERTIES/>
       </RPY_DYFATC>
      </FIELDS>
      <FLOW_LOGIC>
@@ -165,9 +50,7 @@
       <RPY_DYFLOW>
        <LINE>MODULE status_3000.</LINE>
       </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE/>
-      </RPY_DYFLOW>
+      <RPY_DYFLOW/>
       <RPY_DYFLOW>
        <LINE>PROCESS AFTER INPUT.</LINE>
       </RPY_DYFLOW>
@@ -187,11 +70,7 @@
    <CUA>
     <ADM>
      <ACTCODE>000001</ACTCODE>
-     <MENCODE/>
      <PFKCODE>000001</PFKCODE>
-     <DEFAULTACT/>
-     <DEFAULTPFK/>
-     <MOD_LANGU/>
     </ADM>
     <STA>
      <RSMPE_STAT>
@@ -201,30 +80,16 @@
       <PFKCODE>000001</PFKCODE>
       <BUTCODE>0001</BUTCODE>
       <INT_NOTE>Status, screen 3000</INT_NOTE>
-      <CTXCODE/>
      </RSMPE_STAT>
     </STA>
     <FUN>
      <RSMPE_FUNT>
       <CODE>BACK</CODE>
       <TEXTNO>001</TEXTNO>
-      <TYPE/>
-      <MODIF/>
       <TEXT_TYPE>S</TEXT_TYPE>
-      <TEXT_NAME/>
-      <ICON_ID/>
       <FUN_TEXT>Back</FUN_TEXT>
-      <ICON_TEXT/>
-      <INFO_TEXT/>
-      <PATH/>
-      <SFW_SWITCHID/>
-      <SFW_SHOWHIDE/>
      </RSMPE_FUNT>
     </FUN>
-    <MEN/>
-    <MTX/>
-    <ACT/>
-    <BUT/>
     <PFK>
      <RSMPE_PFK>
       <CODE>000001</CODE>
@@ -243,17 +108,13 @@
      <RSMPE_ATRT>
       <OBJ_TYPE>A</OBJ_TYPE>
       <OBJ_CODE>000001</OBJ_CODE>
-      <SUB_CODE/>
       <MODAL>D</MODAL>
-      <NORM/>
       <INT_NOTE>Status, screen 3000</INT_NOTE>
      </RSMPE_ATRT>
      <RSMPE_ATRT>
       <OBJ_TYPE>P</OBJ_TYPE>
       <OBJ_CODE>000001</OBJ_CODE>
-      <SUB_CODE/>
       <MODAL>D</MODAL>
-      <NORM/>
       <INT_NOTE>Status, screen 3000</INT_NOTE>
      </RSMPE_ATRT>
      <RSMPE_ATRT>
@@ -261,7 +122,6 @@
       <OBJ_CODE>000001</OBJ_CODE>
       <SUB_CODE>0001</SUB_CODE>
       <MODAL>D</MODAL>
-      <NORM/>
       <INT_NOTE>Status, screen 3000</INT_NOTE>
      </RSMPE_ATRT>
     </DOC>
@@ -271,15 +131,12 @@
       <TEXT>FORMfactor</TEXT>
      </RSMPE_TITT>
     </TIT>
-    <BIV/>
    </CUA>
    <TPOOL>
     <item>
      <ID>R</ID>
-     <KEY/>
      <ENTRY>FORMfactor</ENTRY>
      <LENGTH>10</LENGTH>
-     <SPLIT/>
     </item>
     <item>
      <ID>S</ID>
