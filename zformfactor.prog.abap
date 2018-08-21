@@ -34,8 +34,8 @@ CONSTANTS: gc_tab     TYPE c LENGTH 2 VALUE '  ',
            gc_newline TYPE c VALUE cl_abap_char_utilities=>newline.
 
 DEFINE _raise.
-  raise exception type lcx_exception
-    exporting
+  RAISE EXCEPTION TYPE lcx_exception
+    EXPORTING
       iv_text = &1.                                         "#EC NOTEXT
 END-OF-DEFINITION.
 
@@ -82,13 +82,15 @@ CLASS lcl_parameter DEFINITION FINAL.
         RETURNING VALUE(rv_name) TYPE string,
       set_type
         IMPORTING iv_type TYPE string,
+      set_ref_to,
       render
         IMPORTING iv_no_type     TYPE abap_bool DEFAULT abap_false
         RETURNING VALUE(rv_code) TYPE string.
 
   PRIVATE SECTION.
-    DATA: mv_name TYPE string,
-          mv_type TYPE string.
+    DATA: mv_name      TYPE string,
+          mv_type_type TYPE string,
+          mv_type      TYPE string.
 
 ENDCLASS.                    "lcl_parameter DEFINITION
 
@@ -102,7 +104,8 @@ CLASS lcl_parameter IMPLEMENTATION.
   METHOD constructor.
 
     mv_name = iv_name.
-
+    mv_type = 'ANY'.
+    mv_type_type = 'TYPE'.
   ENDMETHOD.                    "constructor
 
   METHOD get_name.
@@ -113,11 +116,15 @@ CLASS lcl_parameter IMPLEMENTATION.
     mv_type = iv_type.
   ENDMETHOD.                    "set_type
 
+  METHOD set_ref_to.
+    mv_type_type = 'TYPE REF TO'.
+  ENDMETHOD.
+
   METHOD render.
     IF iv_no_type = abap_true.
       rv_code = mv_name.
     ELSE.
-      CONCATENATE mv_name 'TYPE' mv_type
+      CONCATENATE mv_name mv_type_type mv_type
         INTO rv_code SEPARATED BY space.
     ENDIF.
 
@@ -641,10 +648,10 @@ CLASS lcl_logic DEFINITION FINAL.
         RETURNING VALUE(rv_statement) TYPE string
         RAISING   lcx_exception,
       handle_form
-        IMPORTING is_result TYPE zcl_aoc_parser=>st_result
+        IMPORTING is_result TYPE zcl_aoc_parser=>ty_result
         RAISING   lcx_exception,
       handle_perform
-        IMPORTING is_result           TYPE zcl_aoc_parser=>st_result
+        IMPORTING is_result           TYPE zcl_aoc_parser=>ty_result
         RETURNING VALUE(rv_statement) TYPE string
         RAISING   lcx_exception.
 
@@ -664,7 +671,7 @@ CLASS lcl_logic IMPLEMENTATION.
           lo_method    TYPE REF TO lcl_method,
           lo_parameter TYPE REF TO lcl_parameter,
           lo_list      TYPE REF TO lcl_parameter_list,
-          ls_result    TYPE zcl_aoc_parser=>st_result.
+          ls_result    TYPE zcl_aoc_parser=>ty_result.
 
     FIELD-SYMBOLS: <ls_token> LIKE LINE OF ls_result-tokens.
 
@@ -683,12 +690,14 @@ CLASS lcl_logic IMPLEMENTATION.
           lo_method = go_class->add_method( <ls_token>-code ).
         WHEN 'FORM_USING'.
           lo_list = lo_method->get_importing( ).
-        WHEN 'FORM_CHANGING'.
+        WHEN 'FORM_CHANGING' OR 'FORM_TABLES'.
           lo_list = lo_method->get_changing( ).
         WHEN 'FORM_RAISING'.
           lo_list = lo_method->get_exception( ).
         WHEN zcl_aoc_parser=>c_role-fielddefid OR zcl_aoc_parser=>c_role-classexctypeid.
           lo_parameter = lo_list->add( <ls_token>-code ).
+        WHEN 'REF'.
+          lo_parameter->set_ref_to( ).
         WHEN zcl_aoc_parser=>c_role-typeid.
           lo_parameter->set_type( <ls_token>-code ).
       ENDCASE.
@@ -776,7 +785,7 @@ CLASS lcl_logic IMPLEMENTATION.
           OR lv_statement CP '#**'.
         add_code( lv_statement ).
         CLEAR lv_statement.
-      ELSEIF lv_statement CP '*.+'
+      ELSEIF lv_statement CP '*.*'
           OR ( strlen( lv_statement ) >= 8 AND lv_statement(8) = 'ENDFORM.' ).
         lv_statement = handle_statement( lv_statement ).
         add_code( lv_statement ).
@@ -809,7 +818,7 @@ CLASS lcl_logic IMPLEMENTATION.
 
     DATA: lt_code      TYPE TABLE OF string,
           lv_statement TYPE string,
-          ls_result    TYPE zcl_aoc_parser=>st_result.
+          ls_result    TYPE zcl_aoc_parser=>ty_result.
 
     FIELD-SYMBOLS: <ls_token> LIKE LINE OF ls_result-tokens.
 
