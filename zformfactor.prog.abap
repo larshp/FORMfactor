@@ -34,8 +34,8 @@ CONSTANTS: gc_tab     TYPE c LENGTH 2 VALUE '  ',
            gc_newline TYPE c VALUE cl_abap_char_utilities=>newline.
 
 DEFINE _raise.
-  raise exception type lcx_exception
-    exporting
+  RAISE EXCEPTION TYPE lcx_exception
+    EXPORTING
       iv_text = &1.                                         "#EC NOTEXT
 END-OF-DEFINITION.
 
@@ -88,9 +88,9 @@ CLASS lcl_parameter DEFINITION FINAL.
         RETURNING VALUE(rv_code) TYPE string.
 
   PRIVATE SECTION.
-    DATA: mv_name TYPE string,
-          mv_type_type type string,
-          mv_type TYPE string.
+    DATA: mv_name      TYPE string,
+          mv_type_type TYPE string,
+          mv_type      TYPE string.
 
 ENDCLASS.                    "lcl_parameter DEFINITION
 
@@ -116,9 +116,9 @@ CLASS lcl_parameter IMPLEMENTATION.
     mv_type = iv_type.
   ENDMETHOD.                    "set_type
 
-  method set_ref_to.
+  METHOD set_ref_to.
     mv_type_type = 'TYPE REF TO'.
-  endmethod.
+  ENDMETHOD.
 
   METHOD render.
     IF iv_no_type = abap_true.
@@ -690,13 +690,13 @@ CLASS lcl_logic IMPLEMENTATION.
           lo_method = go_class->add_method( <ls_token>-code ).
         WHEN 'FORM_USING'.
           lo_list = lo_method->get_importing( ).
-        WHEN 'FORM_CHANGING' or 'FORM_TABLES'.
+        WHEN 'FORM_CHANGING' OR 'FORM_TABLES'.
           lo_list = lo_method->get_changing( ).
         WHEN 'FORM_RAISING'.
           lo_list = lo_method->get_exception( ).
         WHEN zcl_aoc_parser=>c_role-fielddefid OR zcl_aoc_parser=>c_role-classexctypeid.
           lo_parameter = lo_list->add( <ls_token>-code ).
-        when 'REF'.
+        WHEN 'REF'.
           lo_parameter->set_ref_to( ).
         WHEN zcl_aoc_parser=>c_role-typeid.
           lo_parameter->set_type( <ls_token>-code ).
