@@ -752,8 +752,13 @@ CLASS lcl_logic IMPLEMENTATION.
   ENDMETHOD.                    "add_code
 
   METHOD loop.
+    CONSTANTS: BEGIN OF lcs_comment_pattern,
+                 star       TYPE string VALUE '#**' ##NO_TEXT,
+                 apostrophe TYPE string VALUE '"*' ##NO_TEXT,
+               END OF lcs_comment_pattern.
 
     DATA: lv_statement TYPE string,
+          lv_condensed TYPE string,
           lt_source    TYPE TABLE OF string,
           lv_line      LIKE LINE OF lt_source.
 
@@ -772,7 +777,8 @@ CLASS lcl_logic IMPLEMENTATION.
       ELSEIF lv_statement CP '*.+'
           OR ( strlen( lv_statement ) >= 8 AND lv_statement(8) = 'ENDFORM.' )
           OR lv_statement = gc_newline
-          OR lv_statement CP '#**'.
+          OR lv_statement CP lcs_comment_pattern-star
+          OR lv_statement CP lcs_comment_pattern-apostrophe.
         CLEAR lv_statement.
       ENDIF.
     ENDLOOP.
@@ -781,8 +787,12 @@ CLASS lcl_logic IMPLEMENTATION.
       CONCATENATE lv_statement lv_line gc_newline
         INTO lv_statement.
 
+      lv_condensed = lv_statement.
+      CONDENSE lv_condensed.
+
       IF lv_statement = gc_newline
-          OR lv_statement CP '#**'.
+          OR lv_statement CP lcs_comment_pattern-star
+          OR lv_condensed CP lcs_comment_pattern-apostrophe.
         add_code( lv_statement ).
         CLEAR lv_statement.
       ELSEIF lv_statement CP '*.*'
