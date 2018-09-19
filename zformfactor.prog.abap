@@ -39,8 +39,9 @@ DEFINE _raise.
       iv_text = &1.                                         "#EC NOTEXT
 END-OF-DEFINITION.
 
+SELECTION-SCREEN: BEGIN OF BLOCK bl1 WITH FRAME.
 PARAMETERS: p_prog TYPE rpy_prog-progname DEFAULT 'ZTEST01' OBLIGATORY.
-
+SELECTION-SCREEN: END OF BLOCK bl1.
 ********************************************************************************
 
 CLASS lcx_exception DEFINITION INHERITING FROM cx_static_check FINAL.
