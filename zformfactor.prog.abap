@@ -603,7 +603,9 @@ CLASS lcl_source IMPLEMENTATION.
         not_found        = 2
         permission_error = 3
         OTHERS           = 4.                             "#EC CI_SUBRC
-    ASSERT sy-subrc = 0.
+    IF sy-subrc <> 0.
+      MESSAGE |Source { iv_program } not found!| type 'E'.
+    ENDIF.
 
     CONCATENATE LINES OF lt_source INTO rv_source
       SEPARATED BY gc_newline.
