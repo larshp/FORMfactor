@@ -1,5 +1,3 @@
-[![abaplint](http://abaplint.org/badges/larshp/FORMfactor)](http://abaplint.org/project/larshp/FORMfactor)
-
 # FORMfactor
 Helps refactoring old FORM based programs to local classes with static methods.
 
